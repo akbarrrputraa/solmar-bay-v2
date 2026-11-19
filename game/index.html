@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Solmar Bay 2 — Sunset Heat | 3D Open-World Crime Game</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1a0f2e; font-family: 'Segoe UI', system-ui, sans-serif; }
+  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+  #hud { position: fixed; inset: 0; pointer-events: none; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.8); user-select: none; }
+  .panel { background: rgba(10,8,20,.55); border: 1px solid rgba(255,255,255,.18); border-radius: 8px; padding: 6px 10px; backdrop-filter: blur(2px); }
+  #stats { position: absolute; top: 12px; left: 12px; font-size: 15px; line-height: 1.5; }
+  #stats .cash { color: #7dff9a; font-weight: 700; font-size: 18px; }
+  #stats .respect { color: #ffd166; }
+  .bar { width: 170px; height: 9px; background: rgba(0,0,0,.6); border-radius: 5px; overflow: hidden; margin: 2px 0 4px; border: 1px solid rgba(255,255,255,.25); }
+  .bar > div { height: 100%; }
+  #hpbar { background: linear-gradient(90deg,#ff5a5a,#ff8a5a); }
+  #armorbar { background: linear-gradient(90deg,#5aa8ff,#8ad0ff); }
+  #wanted { position: absolute; top: 12px; right: 12px; text-align: right; font-size: 26px; letter-spacing: 4px; }
+  #wanted .star { color: #333; -webkit-text-stroke: 1px #fff; }
+  #wanted .star.on { color: #ffd60a; -webkit-text-stroke: 1px #b8860b; }
+  #clock { font-size: 14px; letter-spacing: 1px; margin-top: 2px; }
+  #minimap { position: absolute; top: 86px; right: 12px; border: 2px solid rgba(255,255,255,.35); border-radius: 50%; background: rgba(8,10,24,.85); box-shadow: 0 0 0 4px rgba(0,0,0,.35); }
+  #objective { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); max-width: 560px; text-align: center; font-size: 15px; }
+  #objective .mission-name { color: #ffd166; font-weight: 700; font-size: 16px; letter-spacing: .5px; }
+  #objective .mission-goal { font-size: 14px; opacity: .95; }
+  #objective .mission-timer { color: #ff8a5a; font-weight: 700; }
+  #weapon { position: absolute; bottom: 14px; left: 14px; font-size: 15px; }
+  #weapon .wname { font-weight: 700; }
+  #radio { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); font-size: 14px; color: #ffd166; }
+  #speedo { position: absolute; bottom: 14px; right: 14px; text-align: right; font-size: 15px; }
+  #speedo .mph { font-size: 30px; font-weight: 800; line-height: 1; }
+  #toast { position: absolute; bottom: 96px; left: 50%; transform: translateX(-50%); font-size: 17px; font-weight: 600; color: #fff; text-align: center; }
+  #toast .sub { font-size: 14px; font-weight: 400; color: #ffd166; }
+  #crosshair { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; display: none; }
+  #crosshair:before, #crosshair:after { content: ''; position: absolute; background: #fff; box-shadow: 0 0 3px #000; }
+  #crosshair:before { left: 10px; top: 0; width: 2px; height: 22px; }
+  #crosshair:after { top: 10px; left: 0; width: 22px; height: 2px; }
+  #hint { position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); font-size: 13px; opacity: .85; }
+  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; background: linear-gradient(180deg, rgba(26,10,46,.82), rgba(8,4,18,.88)); color: #fff; z-index: 10; text-align: center; pointer-events: auto; }
+  .overlay h1 { font-size: 64px; margin: 0; letter-spacing: 4px; background: linear-gradient(180deg,#ffe9a8,#ff9d5c 55%,#ff5e7a); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 4px 30px rgba(255,120,60,.35); }
+  .overlay h2 { font-size: 22px; margin: 4px 0 0; color: #ffd166; letter-spacing: 6px; font-weight: 600; }
+  .overlay p { max-width: 620px; font-size: 15px; line-height: 1.6; color: #e8e2f5; }
+  .overlay .tagline { color: #ffb3c6; font-style: italic; }
+  .btn { pointer-events: auto; cursor: pointer; background: linear-gradient(180deg,#ff9d5c,#ff5e7a); color: #fff; border: none; border-radius: 8px; padding: 12px 28px; font-size: 17px; font-weight: 700; margin: 6px; box-shadow: 0 4px 18px rgba(255,94,122,.45); }
+  .btn:hover { filter: brightness(1.12); }
+  .btn.ghost { background: rgba(255,255,255,.12); box-shadow: none; border: 1px solid rgba(255,255,255,.35); }
+  .btnrow { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+  .featuregrid { display: grid; grid-template-columns: repeat(3, minmax(150px, 200px)); gap: 8px; margin: 14px 0 4px; font-size: 13px; text-align: left; }
+  .featuregrid div { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 8px; padding: 8px 10px; }
+  .featuregrid b { color: #ffd166; }
+  .hidden { display: none !important; }
+  #garage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8,4,18,.72); z-index: 11; color: #fff; }
+  #garage .card { background: #171228; border: 1px solid rgba(255,255,255,.2); border-radius: 12px; padding: 22px 26px; width: 420px; }
+  #garage h3 { margin: 0 0 4px; color: #ffd166; }
+  #garage .item { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.12); font-size: 15px; }
+  #garage .item button { background: #ff5e7a; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: 700; }
+  #garage .item button:disabled { opacity: .4; cursor: default; }
+  #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+</style>
+</head>
+<body>
+<canvas id="game" aria-label="Solmar Bay 2: 3D open-world crime game. Drive, steal cars, complete story missions, evade the police."></canvas>
+<div id="hud">
+  <div id="stats" class="panel">
+    <div class="cash">$<span id="cash">250</span></div>
+    <div>♥ <span id="hptext">100</span><div class="bar"><div id="hpbar" style="width:100%"></div></div></div>
+    <div>🛡 Armor<div class="bar"><div id="armorbar" style="width:0%"></div></div></div>
+    <div class="respect">★ Respect <span id="respect">0</span> &nbsp;·&nbsp; Missions <span id="missionsDone">0</span>/8</div>
+  </div>
+  <div id="wanted"><span id="stars"></span><div id="clock">18:42 · GOLDEN HOUR</div></div>
+  <canvas id="minimap" width="168" height="168"></canvas>
+  <div id="objective" class="panel"><div class="mission-name" id="missionName">SOLMAR BAY</div><div class="mission-goal" id="missionGoal">Press ENTER to start the story — or explore the city freely.</div><div class="mission-timer" id="missionTimer"></div></div>
+  <div id="weapon" class="panel"><span class="wname" id="weaponName">Fists</span> · <span id="ammo">∞</span><br><span id="weaponslots" style="font-size:12px;opacity:.8"></span></div>
+  <div id="radio" class="panel">♪ <span id="station">BAY FM 101.1 — Sunset Drive</span></div>
+  <div id="speedo" class="panel"><div class="mph"><span id="speed">0</span></div><div id="carname">ON FOOT</div></div>
+  <div id="toast"></div>
+  <div id="crosshair"></div>
+  <div id="hint">WASD move/drive · E enter car · Click shoot · Q weapon · R radio · G garage · P pause</div>
+</div>
+
+<div id="title" class="overlay">
+  <h1>SOLMAR BAY 2</h1>
+  <h2>SUNSET HEAT</h2>
+  <p class="tagline">Eight jobs. Five stars. One last sunset in the city that never sleeps.</p>
+  <p>You are <b>Rico Vale</b>, fresh out of the Marina lockup. Mara Kessler has one last plan — a string of jobs across Solmar Bay, from the pier to the bank vault — and the Solmar Bay Police Department is not going to watch quietly. Steal cars, outrun the law, survive the helicopter, and pull off the Big Score.</p>
+  <div class="featuregrid">
+    <div><b>8 story missions</b><br>Heists, getaways, chases &amp; the Big Score</div>
+    <div><b>5-star police</b><br>Patrols, pursuits, roadblocks &amp; helicopter</div>
+    <div><b>Open city</b><br>Traffic, pedestrians, beach &amp; marina</div>
+    <div><b>Carjacking</b><br>Steal any car — sedans, sports, vans</div>
+    <div><b>Garage upgrades</b><br>Engine, armor &amp; paint for your ride</div>
+    <div><b>Radio &amp; saves</b><br>3 synth stations, autosave + manual save</div>
+  </div>
+  <div class="btnrow">
+    <button class="btn" id="btnContinue">CONTINUE</button>
+    <button class="btn" id="btnNew">NEW GAME</button>
+    <button class="btn ghost" id="btnHow">HOW TO PLAY</button>
+  </div>
+  <p style="font-size:12px;opacity:.7">An original game. Solmar Bay, Rico Vale, Mara Kessler and every street are invented — nothing from any commercial game. Keyboard + mouse. Sound on for the full sunset.</p>
+</div>
+
+<div id="howto" class="overlay hidden">
+  <h2 style="font-size:30px">HOW TO PLAY</h2>
+  <p style="text-align:left">
+    <b>WASD / arrows</b> — walk, or drive when in a car &nbsp;·&nbsp; <b>Shift</b> sprint<br>
+    <b>E</b> — steal / enter the nearest car, or get out &nbsp;·&nbsp; <b>Space</b> handbrake<br>
+    <b>Mouse</b> — aim &nbsp;·&nbsp; <b>Click</b> — shoot (on foot) &nbsp;·&nbsp; <b>Q</b> — switch weapon<br>
+    <b>R</b> — change radio station &nbsp;·&nbsp; <b>M</b> — mute &nbsp;·&nbsp; <b>G</b> — garage (near the garage)<br>
+    <b>P / Esc</b> — pause, save, resume &nbsp;·&nbsp; <b>Enter</b> — start next mission<br><br>
+    Follow the <b style="color:#ffd166">yellow marker</b> on the minimap. Crimes raise your <b>wanted level</b> (stars, top right): 1–2 stars bring patrol cars, 3 adds roadblocks, 4–5 bring the police helicopter. Break line of sight to cool down. If you are busted or wasted you wake up at the clinic and lose some cash. Finish all 8 missions to pull off the Big Score.
+  </p>
+  <div class="btnrow"><button class="btn" id="btnHowBack">BACK</button></div>
+</div>
+
+<div id="pause" class="overlay hidden">
+  <h2 style="font-size:34px">PAUSED</h2>
+  <p id="pauseStats"></p>
+  <div class="btnrow">
+    <button class="btn" id="btnResume">RESUME</button>
+    <button class="btn" id="btnSave">SAVE GAME</button>
+    <button class="btn ghost" id="btnRestart">RESTART MISSION</button>
+    <button class="btn ghost" id="btnQuit">QUIT TO TITLE</button>
+  </div>
+</div>
+
+<div id="busted" class="overlay hidden">
+  <h1 style="font-size:52px">BUSTED!</h1>
+  <p>The Solmar Bay PD caught up with you. You spent the night in a cell and woke up at the clinic — minus the bail money.</p>
+  <div class="btnrow"><button class="btn" id="btnBustedOk">BACK ON THE STREETS</button></div>
+</div>
+
+<div id="wasted" class="overlay hidden">
+  <h1 style="font-size:52px">WASTED</h1>
+  <p>You blacked out on the streets of Solmar Bay. The clinic patched you up — for a price.</p>
+  <div class="btnrow"><button class="btn" id="btnWastedOk">BACK ON THE STREETS</button></div>
+</div>
+
+<div id="complete" class="overlay hidden">
+  <h1 style="font-size:52px">THE BIG SCORE</h1>
+  <p id="completeText">You did it. The vault, the helicopter, the whole city behind you — and the yacht waiting at the marina. Solmar Bay is yours, Rico.</p>
+  <div class="btnrow"><button class="btn" id="btnFreeRoam">KEEP PLAYING — FREE ROAM</button></div>
+</div>
+
+<div id="garage" class="hidden">
+  <div class="card">
+    <h3>🔧 MARINA GARAGE — UPGRADES</h3>
+    <div id="garageCash" style="opacity:.85;margin-bottom:6px"></div>
+    <div id="garageItems"></div>
+    <div class="btnrow" style="margin-top:12px"><button class="btn" id="btnGarageClose">CLOSE [G]</button></div>
+  </div>
+</div>
+
+<p id="status" role="status" aria-live="polite"></p>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
