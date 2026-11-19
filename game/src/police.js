@@ -100,8 +100,10 @@ export function updatePolice(G, dt) {
     while (diff < -Math.PI) diff += Math.PI * 2;
     cop.heading += Math.max(-2.4 * dt, Math.min(2.4 * dt, diff));
     const top = wanted >= 4 ? 36 : wanted >= 3 ? 33 : 30;
-    const target = dist > 10 ? top : top * 0.55;
-    cop.speed += (target - cop.speed) * Math.min(1, dt * 0.9);
+    const close = dist < 10;
+    const target = !close ? top : dist > 3.5 ? top * 0.55 : top * 0.25; // brake hard as it closes in
+    cop.speed += (target - cop.speed) * Math.min(1, dt * (close ? 3 : 0.9));
+    if (dist < 4) cop.speed = Math.min(cop.speed, 12); // on top of the player: slow enough to make the arrest
     cop.x += Math.sin(cop.heading) * cop.speed * dt;
     cop.z += Math.cos(cop.heading) * cop.speed * dt;
     // Ram damage when it reaches the player.
@@ -111,8 +113,9 @@ export function updatePolice(G, dt) {
         if (p.car.hp <= 0) { /* wreck handled by player.js */ }
         if (Math.random() < dt * 6) G.addParticles(cop.x, cop.z, 2, 2, '#ffb35c');
       } else {
-        // On foot, slow and close: busted.
-        if (Math.abs(cop.speed) < 14 && dist < 2.6) {
+        // On foot, slow and close: busted. (The brake band above gets the
+        // cop under 20 u/s as it closes in, so this can actually fire.)
+        if (Math.abs(cop.speed) < 20 && dist < 2.6) {
           G.onBusted();
           return;
         }

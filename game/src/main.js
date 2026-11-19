@@ -368,7 +368,7 @@ function drawWorld() {
     const rx = Math.cos(h.rotor) * 5, rz = Math.sin(h.rotor) * 5;
     r.addLine([h.x - rx, h.y + 2.6, h.z - rz], [h.x + rx, h.y + 2.6, h.z + rz], 'rgba(200,200,200,0.7)', 3);
     r.addLine([h.x, h.y - 1, h.z], [h.searchX, 0, h.searchZ], 'rgba(255,240,180,0.35)', 5);
-    r.addGlow(h.searchX, 0.5, h.searchZ, 2.5, '#fff3c4', 0.35);
+    r.addGlow(h.searchX, 0.5, h.searchZ, 1.8, '#fff3c4', 0.3);
     r.addGlow(h.x, h.y, h.z, 1, '#ff3b30', 0.8);
   }
   // Tracers.

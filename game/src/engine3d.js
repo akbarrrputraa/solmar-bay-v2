@@ -191,8 +191,12 @@ export function createRenderer(canvas) {
     drawList.push({
       d: p.d,
       fn: () => {
+        // Soft radial falloff so a glow reads as light, not a flat disc.
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+        g.addColorStop(0, color);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.globalAlpha = alpha ?? 0.8;
-        ctx.fillStyle = color;
+        ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 1;
       },
